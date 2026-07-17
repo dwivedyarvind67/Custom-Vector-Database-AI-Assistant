@@ -2,361 +2,446 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Custom Vector Database & AI Assistant — Arvind Dwivedi</title>
+<title>vector lab — redesign</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:     #050805;
-  --card:   #0a0f0a;
-  --border: #162516;
-  --cs:     #00ff66;
-  --math:   #33cc33;
-  --food:   #88ff88;
-  --sports: #00aa44;
-  --accent: #00ff66;
-  --text:   #d2ffd2;
-  --muted:  #446644;
-  --red:    #ff3333;
-  --green:  #00ff66;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg); color: var(--text);
-  font-family: 'Fira Code', 'Courier New', monospace;
-  height: 100vh; overflow: hidden;
-  display: flex; flex-direction: column;
-}
+  :root{
+    --ink:#0B0F0E;
+    --panel:#0F1513;
+    --panel-2:#121917;
+    --hairline:#1E2826;
+    --hairline-soft:#161E1C;
+    --text:#E4E9E6;
+    --text-dim:#8A9B95;
+    --text-muted:#5A6B66;
+    --mint:#8FE3C0;
+    --mint-dim:#4E7566;
+    --amber:#E3B37A;
+    --violet:#B3A6E0;
+    --sky:#7FBEDD;
+    --rose:#D99AAE;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'IBM Plex Mono',monospace;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .app{
+    max-width:1440px;margin:0 auto;
+    border-left:1px solid var(--hairline);
+    border-right:1px solid var(--hairline);
+    height:100%;width:100%;
+    display:flex;flex-direction:column;
+  }
 
-/* ── HEADER ── */
-header {
-  background: var(--card); border-bottom: 2px solid var(--border);
-  padding: 12px 24px; display: flex; align-items: center; gap: 14px; flex-shrink: 0;
-}
-header h1 {
-  font-size: 16px; font-weight: 600; letter-spacing: 3px;
-  color: var(--green); text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
-}
-.badge { font-size: 9px; padding: 3px 10px; border-radius: 2px; letter-spacing: 1px; border: 1px solid var(--border); color: var(--muted); text-transform: uppercase; }
-.badge.hl { border-color: var(--accent); color: var(--accent); background: rgba(0,255,102,.08); text-shadow: 0 0 5px rgba(0,255,102,0.5); }
-.badge.ok { border-color: var(--green); color: var(--green); background: rgba(0,255,102,.05); }
-.badge.err { border-color: var(--red); color: var(--red); background: rgba(255,51,51,.05); }
-#statsLabel { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 500; }
+  /* header */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 32px;
+    border-bottom:1px solid var(--hairline);
+    flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:18px;}
+  .brand h1{font-size:15px;font-weight:600;letter-spacing:0.04em;color:var(--text);}
+  .brand .sub{font-size:11px;color:var(--text-muted);letter-spacing:0.08em;margin-top:2px;}
+  .algo-toggle{display:flex;gap:2px;background:var(--panel);border:1px solid var(--hairline);border-radius:3px;padding:2px;}
+  .algo-toggle button{
+    background:transparent;border:none;color:var(--text-muted);
+    font-family:inherit;font-size:11px;letter-spacing:0.06em;
+    padding:7px 14px;border-radius:2px;cursor:pointer;
+    transition:all 0.15s;
+  }
+  .algo-toggle button.active{background:var(--hairline-soft);color:var(--mint);}
+  .status-line{display:flex;align-items:center;gap:16px;font-size:11px;color:var(--text-muted);letter-spacing:0.04em;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--mint);display:inline-block;margin-right:6px;box-shadow:0 0 6px var(--mint);transition:all 0.3s;}
+  .offline{color:var(--text-muted);}
+  .offline .dot{background:#4A3838;box-shadow:none;}
+  .meta{color:var(--text-dim);}
 
-/* ── LAYOUT ── */
-.layout { display: flex; flex: 1; overflow: hidden; }
-.left-panel { width: 280px; flex-shrink: 0; background: var(--card); border-right: 2px solid var(--border); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-.center-panel { flex: 1; position: relative; overflow: hidden; background: #030503; }
-#scatter { display: block; width: 100%; height: 100%; }
-.right-panel { width: 380px; flex-shrink: 0; background: var(--card); border-left: 2px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  /* layout */
+  .body{display:grid;grid-template-columns:280px 1fr 320px;flex:1;min-height:0;overflow:hidden;}
+  .col{padding:26px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:24px;}
+  .left{border-right:1px solid var(--hairline);}
+  .right{border-left:1px solid var(--hairline);}
 
-/* ── TABS ── */
-.tabs { display: flex; border-bottom: 2px solid var(--border); flex-shrink: 0; background: rgba(0, 0, 0, 0.2); }
-.tab { flex: 1; padding: 12px 6px; text-align: center; font-size: 10px; letter-spacing: 2px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all .15s ease-in-out; font-weight: 600; }
-.tab.on { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0,255,102,.02); text-shadow: 0 0 5px rgba(0,255,102,0.4); }
-.tab-content { display: none; flex: 1; overflow-y: auto; padding: 20px; flex-direction: column; gap: 20px; }
-.tab-content.on { display: flex; }
+  .section{margin-bottom:6px;}
+  .section-label{
+    font-size:10px;letter-spacing:0.14em;color:var(--text-muted);
+    text-transform:uppercase;margin-bottom:12px;font-weight:600;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-label::after{content:"";flex:1;height:1px;background:var(--hairline);}
 
-/* ── COMMON COMPONENTS ── */
-.sec { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 600; display: flex; align-items: center; }
-.sec::before { content: '> '; color: var(--accent); margin-right: 4px; }
-input[type=text], select, textarea {
-  width: 100%; background: #020402; border: 1px solid var(--border); color: var(--text);
-  padding: 10px 12px; border-radius: 2px; font-family: inherit; font-size: 11px; outline: none; transition: all .2s;
-}
-input[type=text]:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 255, 102, 0.2); }
-textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
-select option { background: var(--card); color: var(--text); }
-input[type=range] { width: 100%; accent-color: var(--accent); background: transparent; border: none; padding: 0; }
-button {
-  width: 100%; padding: 10px 15px; border: 1px solid var(--border); border-radius: 2px; cursor: pointer;
-  font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 1px; transition: all .2s;
-  background: transparent; color: var(--text);
-}
-.btn-p { border-color: var(--accent); color: var(--accent); background: rgba(0, 255, 102, 0.05); }
-.btn-p:hover { background: rgba(0, 255, 102, 0.15); box-shadow: 0 0 10px rgba(0, 255, 102, 0.2); }
-.btn-p:disabled { opacity: .4; cursor: wait; box-shadow: none; }
-.btn-s { background: transparent; border-color: var(--border); color: var(--muted); }
-.btn-s:hover { border-color: var(--text); color: var(--text); }
-.btn-s:disabled { opacity: .4; cursor: wait; }
-.btn-g { border-color: var(--green); color: var(--green); background: rgba(0, 255, 102, 0.03); }
-.btn-g:hover { background: rgba(0, 255, 102, 0.1); box-shadow: 0 0 10px rgba(0, 255, 102, 0.15); }
-.btn-g:disabled { opacity: .4; cursor: wait; }
+  input[type=text], select, textarea {
+    width:100%;background:var(--panel);border:1px solid var(--hairline);
+    color:var(--text);font-family:inherit;font-size:12px;padding:11px 12px;
+    border-radius:3px;outline:none;transition:border-color .15s;
+  }
+  textarea {
+    resize:vertical;min-height:100px;line-height:1.6;
+  }
+  input[type=text]::placeholder, textarea::placeholder{color:var(--text-muted);}
+  input[type=text]:focus, select:focus, textarea:focus{border-color:var(--mint-dim);}
 
-.algo-row { display: flex; gap: 6px; }
-.algo-btn { flex: 1; padding: 8px 4px; border-radius: 2px; border: 1px solid var(--border); background: #020402; color: var(--muted); font-size: 9px; cursor: pointer; text-align: center; transition: all .15s; letter-spacing: 1px; font-family: inherit; font-weight: 600; }
-.algo-btn.on { border-color: var(--accent); color: var(--accent); background: rgba(0, 255, 102, 0.08); text-shadow: 0 0 5px rgba(0, 255, 102, 0.3); }
+  .btn-primary{
+    width:100%;margin-top:10px;background:transparent;
+    border:1px solid var(--mint-dim);color:var(--mint);
+    font-family:inherit;font-size:11px;letter-spacing:0.08em;
+    padding:11px;border-radius:3px;cursor:pointer;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .15s;
+  }
+  .btn-primary:hover{background:rgba(143,227,192,0.06);}
+  .btn-primary:disabled{opacity:0.5;cursor:wait;}
 
-.legend { display: flex; flex-direction: column; gap: 6px; }
-.leg-row { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+  .btn-secondary{
+    width:100%;margin-top:10px;background:transparent;
+    border:1px solid var(--hairline);color:var(--text-dim);
+    font-family:inherit;font-size:11px;letter-spacing:0.08em;
+    padding:11px;border-radius:3px;cursor:pointer;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:border-color .15s, color .15s;
+  }
+  .btn-secondary:hover{border-color:var(--text-dim);color:var(--text);}
+  .btn-secondary:disabled{opacity:0.5;cursor:wait;}
 
-/* ── RESULTS ── */
-.results { display: flex; flex-direction: column; gap: 8px; }
-.rcard { background: #020402; border: 1px solid var(--border); border-radius: 2px; padding: 12px; animation: fadeUp .2s ease-out; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)} }
-.rcard:hover { border-color: var(--accent); }
-.rrank { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-bottom: 4px; font-weight: 600; }
-.rmeta { font-size: 11px; line-height: 1.5; margin-bottom: 8px; font-family: inherit; }
-.rfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.rcat  { font-size: 9px; padding: 2px 8px; border-radius: 2px; letter-spacing: 1px; border: 1px solid var(--border); text-transform: uppercase; }
-.rdist { font-size: 10px; color: var(--muted); flex: 1; text-align: right; font-family: inherit; }
-.del   { background: rgba(255,51,51,0.05); color: var(--red); border: 1px solid var(--red); border-radius: 2px; cursor: pointer; font-size: 9px; padding: 2px 8px; font-family: inherit; transition: all .2s; width: auto; font-weight: 600; }
-.del:hover { background: rgba(255,51,51,0.2); }
+  .legend-row{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--text-dim);padding:5px 0;}
+  .legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 
-/* ── LATENCY / BENCH / LAYERS ── */
-.lat-big { font-size: 28px; font-weight: 600; color: var(--accent); text-shadow: 0 0 10px rgba(0, 255, 102, 0.3); font-family: inherit; }
-.lat-sub { font-size: 10px; color: var(--muted); margin-top: 3px; font-weight: 500; }
-.bench { display: flex; flex-direction: column; gap: 10px; }
-.brow  { display: flex; flex-direction: column; gap: 4px; }
-.blabel { display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; }
-.btrack { height: 6px; background: #020402; border: 1px solid var(--border); border-radius: 1px; overflow: hidden; }
-.bfill  { height: 100%; transition: width .4s cubic-bezier(0.1, 0.8, 0.3, 1); }
-.layers { display: flex; flex-direction: column; gap: 6px; }
-.lrow   { display: flex; align-items: center; gap: 8px; font-size: 10px; }
-.lnum   { width: 22px; text-align: right; color: var(--accent); font-weight: 600; }
-.ltrack { flex: 1; height: 6px; background: #020402; border: 1px solid var(--border); border-radius: 1px; overflow: hidden; }
-.lfill  { height: 100%; background: var(--accent); opacity: .6; transition: width .4s; }
-.lcount { width: 90px; text-align: right; color: var(--muted); }
-#vecCvs { display: block; width: 100%; background: #020402; border: 1px solid var(--border); border-radius: 2px; }
+  .slider-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .slider-row .val{color:var(--mint);font-size:11px;}
+  input[type=range]{
+    -webkit-appearance:none;width:100%;height:2px;background:var(--hairline);border-radius:1px;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+    background:var(--mint);cursor:pointer;box-shadow:0 0 8px rgba(143,227,192,0.5);
+  }
 
-/* ── DOCUMENT LIST ── */
-.doc-list { display: flex; flex-direction: column; gap: 8px; }
-.dcard { background: #020402; border: 1px solid var(--border); border-radius: 2px; padding: 12px; animation: fadeUp .2s ease-out; }
-.dcard:hover { border-color: var(--accent); }
-.dcard-title { font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--accent); text-transform: uppercase; }
-.dcard-preview { font-size: 10px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
-.dcard-foot { display: flex; justify-content: space-between; align-items: center; }
-.dcard-words { font-size: 9px; color: var(--muted); font-weight: 500; }
+  /* canvas */
+  .canvas-wrap{position:relative;border-right:1px solid var(--hairline);display:flex;flex-direction:column;overflow:hidden;}
+  .canvas-header{
+    display:flex;justify-content:space-between;padding:16px 24px;
+    border-bottom:1px solid var(--hairline);font-size:11px;color:var(--text-muted);letter-spacing:0.04em;
+    flex-shrink:0;
+  }
+  .canvas-header .pc-label{color:var(--text-dim);}
+  #scatter{flex:1;width:100%;height:100%;display:block;background:#090d0c;}
+  .canvas-footer{
+    padding:12px 24px;border-top:1px solid var(--hairline);
+    display:flex;gap:24px;font-size:10px;color:var(--text-muted);letter-spacing:0.06em;
+    flex-shrink:0;
+  }
+  .canvas-footer b{color:var(--text-dim);font-weight:500;}
 
-/* ── OLLAMA STATUS ── */
-.ollama-status { background: #020402; border: 1px solid var(--border); border-radius: 2px; padding: 12px; font-size: 11px; line-height: 1.7; }
-.ollama-status.ok { border-color: var(--green); }
-.ollama-status.err { border-color: var(--red); }
+  /* right panel */
+  .tabs{display:flex;border-bottom:1px solid var(--hairline);margin:-26px -24px 24px;flex-shrink:0;background:var(--panel-2);}
+  .tabs button{
+    flex:1;background:transparent;border:none;color:var(--text-muted);
+    font-family:inherit;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    padding:16px 0;cursor:pointer;border-bottom:1px solid transparent;transition:all 0.15s;
+  }
+  .tabs button.active{color:var(--mint);border-bottom:1px solid var(--mint);}
+  .tab-content{display:none;flex:1;flex-direction:column;gap:20px;}
+  .tab-content.active{display:flex;}
 
-/* ── CHAT ── */
-.chat-history { display: flex; flex-direction: column; gap: 12px; }
-.chat-q { background: rgba(0, 255, 102, 0.03); border: 1px solid var(--border); border-radius: 2px; padding: 12px; font-size: 11px; line-height: 1.6; }
-.chat-q::before { content: "USER> "; color: var(--muted); font-weight: 600; }
-.chat-a { background: #020402; border: 1px solid var(--border); border-radius: 2px; padding: 14px; }
-.chat-a-label { font-size: 9px; letter-spacing: 2px; color: var(--green); margin-bottom: 8px; font-weight: 600; }
-.chat-a-text { font-size: 11px; line-height: 1.7; white-space: pre-wrap; font-family: inherit; }
-.chat-ctx { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px; }
-.chat-ctx-label { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
-.ctx-chip { display: inline-block; font-size: 9px; padding: 3px 8px; border-radius: 2px; margin: 3px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all .15s; font-weight: 500; }
-.ctx-chip:hover { border-color: var(--accent); color: var(--accent); }
-.ctx-expand { display: none; font-size: 10px; color: var(--muted); line-height: 1.6; margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border); border-radius: 2px; }
-.thinking { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); }
-.spinner { width: 12px; height: 12px; border: 1px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.typing::after { content: '▋'; animation: blink 1s step-end infinite; color: var(--accent); }
-@keyframes blink { 50% { opacity: 0; } }
+  /* results / readout */
+  .readout-box{
+    background:var(--panel);border:1px solid var(--hairline);border-radius:3px;
+    padding:14px;font-size:11px;color:var(--text-muted);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .readout-empty{color:var(--text-muted);font-size:11px;line-height:1.6;}
 
-/* ── TOOLTIP ── */
-#tip { position: fixed; display: none; background: var(--card); border: 1px solid var(--accent); border-radius: 2px; padding: 8px 12px; font-size: 10px; pointer-events: none; max-width: 240px; z-index: 200; line-height: 1.5; font-family: inherit; box-shadow: 0 0 10px rgba(0, 255, 102, 0.1); }
+  .rcard{border:1px solid var(--hairline);background:var(--panel-2);border-radius:3px;padding:12px;display:flex;flex-direction:column;gap:6px;animation:fadeUp .2s ease-out;}
+  @keyframes fadeUp { from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)} }
+  .rcard:hover{border-color:var(--mint-dim);}
+  .rrank{font-size:9px;color:var(--text-muted);letter-spacing:0.08em;}
+  .rmeta{font-size:11px;color:var(--text);line-height:1.5;}
+  .rfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .rcat{font-size:9px;padding:2px 6px;border-radius:2px;border:1px solid var(--hairline);text-transform:uppercase;color:var(--text-dim);}
+  .rdist{font-size:10px;color:var(--text-muted);text-align:right;flex:1;}
+  .del{background:transparent;border:1px solid #4a2c2c;color:#e38888;font-size:9px;padding:2px 6px;border-radius:2px;cursor:pointer;transition:all 0.15s;}
+  .del:hover{background:rgba(227,136,136,0.08);border-color:#8c4c4c;}
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); }
+  /* latency / tracer / bars */
+  .latency-val{font-size:24px;font-weight:500;color:var(--mint);font-family:inherit;}
+  .trace{height:36px;position:relative;margin-bottom:4px;border:1px solid var(--hairline);border-radius:3px;background:var(--panel);overflow:hidden;}
+  
+  .bench-bar{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .bench-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);}
+  .bench-track{height:4px;background:var(--panel);border-radius:2px;overflow:hidden;}
+  .bench-fill{height:100%;background:var(--mint-dim);transition:width .4s cubic-bezier(0.1, 0.8, 0.3, 1);}
+
+  .layer-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:10px;color:var(--text-muted);}
+  .layer-row .l{width:20px;color:var(--text-dim);}
+  .layer-bar{flex:1;height:3px;background:var(--hairline);border-radius:2px;overflow:hidden;}
+  .layer-bar .fill{height:100%;background:var(--mint-dim);transition:width 0.4s;}
+  .layer-row .n{width:75px;text-align:right;color:var(--text-muted);}
+
+  .embed-box{
+    background:var(--panel);border:1px solid var(--hairline);border-radius:3px;
+    height:64px;position:relative;overflow:hidden;
+  }
+  #vecCvs { display:block; width:100%; height:100%; background:transparent; }
+
+  /* document items */
+  .dcard{border:1px solid var(--hairline);background:var(--panel-2);border-radius:3px;padding:12px;display:flex;flex-direction:column;gap:6px;}
+  .dcard-title{font-size:11px;font-weight:600;color:var(--mint);text-transform:uppercase;}
+  .dcard-preview{font-size:10px;color:var(--text-dim);line-height:1.5;}
+  .dcard-foot{display:flex;justify-content:space-between;align-items:center;}
+  .dcard-words{font-size:9px;color:var(--text-muted);}
+
+  /* Ollama status box */
+  .ollama-status{background:var(--panel);border:1px solid var(--hairline);border-radius:3px;padding:12px;font-size:11px;line-height:1.7;}
+  .ollama-status.ok{border-color:var(--mint-dim);}
+  .ollama-status.err{border-color:#4a2c2c;}
+
+  /* Chat elements */
+  .chat-history{display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:350px;}
+  .chat-q{background:rgba(143,227,192,0.02);border:1px solid var(--hairline);border-radius:3px;padding:10px 12px;font-size:11px;line-height:1.6;}
+  .chat-q::before{content:"USER> ";color:var(--text-muted);font-weight:600;}
+  .chat-a{background:var(--panel);border:1px solid var(--hairline);border-radius:3px;padding:12px;}
+  .chat-a-label{font-size:9px;color:var(--mint);margin-bottom:6px;font-weight:600;letter-spacing:0.04em;}
+  .chat-a-text{font-size:11px;line-height:1.6;white-space:pre-wrap;}
+  .chat-ctx{margin-top:10px;border-top:1px dashed var(--hairline);padding-top:8px;}
+  .chat-ctx-label{font-size:9px;color:var(--text-muted);margin-bottom:6px;font-weight:600;}
+  .ctx-chip{display:inline-block;font-size:9px;padding:2px 6px;border-radius:2px;margin:2px;background:var(--panel-2);border:1px solid var(--hairline);color:var(--text-dim);cursor:pointer;transition:all 0.15s;}
+  .ctx-chip:hover{border-color:var(--mint);color:var(--mint);}
+  .ctx-expand{display:none;font-size:10px;color:var(--text-dim);line-height:1.5;margin-top:6px;padding:8px;background:var(--ink);border:1px solid var(--hairline);border-radius:2px;}
+  .thinking{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text-muted);}
+  .spinner{width:10px;height:10px;border:1px solid var(--hairline);border-top-color:var(--mint);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .typing::after{content:'▋';animation:blink 1s step-end infinite;color:var(--mint);}
+  @keyframes blink{50%{opacity:0;}}
+
+  /* Tooltip overlay */
+  #tip{position:fixed;display:none;background:var(--panel-2);border:1px solid var(--mint-dim);border-radius:3px;padding:8px 12px;font-size:10px;pointer-events:none;max-width:240px;z-index:200;line-height:1.5;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,0.5);}
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--ink); }
+  ::-webkit-scrollbar-thumb { background: var(--hairline); }
 </style>
 </head>
 <body>
+<div class="app">
 
-<header>
-  <h1>Arvind Dwivedi</h1>
-  <span class="badge hl">HNSW</span>
-  <span class="badge">KD-TREE</span>
-  <span class="badge">BRUTE FORCE</span>
-  <span class="badge" id="ollamaBadge">OLLAMA…</span>
-  <span id="statsLabel">loading…</span>
-</header>
-
-<div class="layout">
-
-  <!-- ══ LEFT PANEL ══ -->
-  <div class="left-panel">
-    <div>
-      <div class="sec">Query (Demo Vectors)</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <input type="text" id="qInput" placeholder="binary tree, sushi, basketball…" />
-        <button class="btn-p" onclick="runSearch()">⚡ SEARCH</button>
+  <header>
+    <div class="brand">
+      <div>
+        <h1 id="brandName">ARVIND DWIVEDI</h1>
+        <div class="sub">VECTOR LAB / SEMANTIC SEARCH</div>
       </div>
     </div>
-    <div>
-      <div class="sec">Algorithm</div>
-      <div class="algo-row">
-        <div class="algo-btn on" data-algo="hnsw"      onclick="setAlgo(this)">HNSW</div>
-        <div class="algo-btn"   data-algo="kdtree"     onclick="setAlgo(this)">KD-TREE</div>
-        <div class="algo-btn"   data-algo="bruteforce" onclick="setAlgo(this)">BRUTE</div>
+    <div class="algo-toggle">
+      <button class="active" data-algo="hnsw" onclick="setAlgo(this)">HNSW</button>
+      <button data-algo="kdtree" onclick="setAlgo(this)">KD-TREE</button>
+      <button data-algo="bruteforce" onclick="setAlgo(this)">BRUTE FORCE</button>
+    </div>
+    <div class="status-line">
+      <span class="offline" id="ollamaBadge"><span class="dot"></span>OLLAMA</span>
+      <span class="meta" id="statsLabel">LOADING...</span>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- LEFT COLUMN -->
+    <div class="col left">
+      <div class="section">
+        <div class="section-label">Query (Demo Vectors)</div>
+        <input type="text" id="qInput" placeholder="binary tree, sushi, basketball…">
+        <button class="btn-primary" onclick="runSearch()">⚡ Search</button>
       </div>
-    </div>
-    <div>
-      <div class="sec">Distance Metric</div>
-      <select id="metric">
-        <option value="cosine">Cosine Similarity</option>
-        <option value="euclidean">Euclidean Distance</option>
-        <option value="manhattan">Manhattan Distance</option>
-      </select>
-    </div>
-    <div>
-      <div class="sec">Top-K: <span id="kLabel">5</span></div>
-      <input type="range" id="kSlider" min="1" max="10" value="5"
-             oninput="document.getElementById('kLabel').textContent=this.value">
-    </div>
-    <div>
-      <div class="sec">Category Legend</div>
-      <div class="legend">
-        <div class="leg-row"><div class="dot" style="background:var(--cs);box-shadow:0 0 5px var(--cs)"></div>CS / Algorithms</div>
-        <div class="leg-row"><div class="dot" style="background:var(--math);box-shadow:0 0 5px var(--math)"></div>Mathematics</div>
-        <div class="leg-row"><div class="dot" style="background:var(--food);box-shadow:0 0 5px var(--food)"></div>Food &amp; Cooking</div>
-        <div class="leg-row"><div class="dot" style="background:var(--sports);box-shadow:0 0 5px var(--sports)"></div>Sports &amp; Games</div>
-        <div class="leg-row"><div class="dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Documents (RAG)</div>
-      </div>
-    </div>
-    <div>
-      <div class="sec">Insert Demo Vector</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <input type="text" id="addMeta" placeholder="Description…" />
-        <select id="addCat">
-          <option value="cs">CS / Algorithms</option>
-          <option value="math">Mathematics</option>
-          <option value="food">Food &amp; Cooking</option>
-          <option value="sports">Sports &amp; Games</option>
+
+      <div class="section">
+        <div class="section-label">Distance metric</div>
+        <select id="metric">
+          <option value="cosine">Cosine similarity</option>
+          <option value="euclidean">Euclidean distance</option>
+          <option value="manhattan">Manhattan distance</option>
         </select>
-        <button class="btn-s" onclick="addVector()">+ INSERT</button>
+      </div>
+
+      <div class="section">
+        <div class="slider-row">
+          <span class="section-label" style="margin:0;border:none;">Top-K</span>
+          <span class="val" id="kLabel">5</span>
+        </div>
+        <input type="range" id="kSlider" min="1" max="10" value="5" oninput="document.getElementById('kLabel').textContent=this.value">
+      </div>
+
+      <div class="section">
+        <div class="section-label">Category Legend</div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--mint)"></span>CS / algorithms</div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--sky)"></span>Mathematics</div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--amber)"></span>Food &amp; cooking</div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--violet)"></span>Sports &amp; games</div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--rose)"></span>Documents (RAG)</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Insert vector</div>
+        <input type="text" id="addMeta" placeholder="Description…" style="margin-bottom:8px;">
+        <select id="addCat" style="margin-bottom:8px;">
+          <option value="cs">CS / algorithms</option>
+          <option value="math">Mathematics</option>
+          <option value="food">Food &amp; cooking</option>
+          <option value="sports">Sports &amp; games</option>
+        </select>
+        <button class="btn-secondary" onclick="addVector()">+ Insert</button>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Benchmark</div>
+        <button class="btn-secondary" onclick="runBenchmark()">▶ COMPARE ALL ALGOS</button>
       </div>
     </div>
-    <div>
-      <div class="sec">Benchmark</div>
-      <button class="btn-s" onclick="runBenchmark()">▶ COMPARE ALL ALGOS</button>
-    </div>
-  </div>
 
-  <!-- ══ CENTER: SCATTER PLOT ══ -->
-  <div class="center-panel"><canvas id="scatter"></canvas></div>
-
-  <!-- ══ RIGHT PANEL: TABS ══ -->
-  <div class="right-panel">
-    <div class="tabs">
-      <div class="tab on"  onclick="switchTab('search')">SEARCH</div>
-      <div class="tab"     onclick="switchTab('docs')">DOCUMENTS</div>
-      <div class="tab"     onclick="switchTab('rag')">ASK AI</div>
-    </div>
-
-    <!-- TAB: SEARCH -->
-    <div class="tab-content on" id="tab-search">
-      <div>
-        <div class="sec">Search Latency</div>
-        <div class="lat-big" id="latBig">—</div>
-        <div class="lat-sub" id="latSub">No query yet</div>
+    <!-- CENTER CANVAS -->
+    <div class="canvas-wrap">
+      <div class="canvas-header">
+        <span class="pc-label">2D PCA projection · semantic space</span>
+        <span>PC₁ → / PC₂ ↑</span>
       </div>
-      <div>
-        <div class="sec">Top Matches</div>
-        <div class="results" id="results">
-          <div style="color:var(--muted);font-size:11px">Run a search to see results…</div>
+
+      <canvas id="scatter"></canvas>
+
+      <div class="canvas-footer">
+        <span><b>Layout</b> force-directed PCA</span>
+        <span><b>Edges shown</b> L0 nearest-neighbor</span>
+        <span><b>Render</b> HTML5 canvas</span>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col right">
+      <div class="tabs">
+        <button class="active" id="tabBtn-search" onclick="switchTab('search')">Search</button>
+        <button id="tabBtn-docs" onclick="switchTab('docs')">Documents</button>
+        <button id="tabBtn-rag" onclick="switchTab('rag')">Ask AI</button>
+      </div>
+
+      <!-- TAB: SEARCH -->
+      <div class="tab-content active" id="tab-search">
+        <div class="section">
+          <div class="section-label">Search latency</div>
+          <div class="trace">
+            <svg width="100%" height="100%" viewBox="0 0 260 36" preserveAspectRatio="none">
+              <polyline points="0,28 20,26 40,29 60,20 80,24 100,10 120,18 140,8 160,16 180,6 200,14 220,9 240,13 260,11" fill="none" stroke="#2c3a35" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="readout-empty" id="latBig">—</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;" id="latSub">No query yet</div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Top matches</div>
+          <div class="results" id="results">
+            <div class="readout-empty">Run a search to see results…</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Query embedding (16D)</div>
+          <div class="embed-box">
+            <canvas id="vecCvs" height="64"></canvas>
+          </div>
+        </div>
+
+        <div class="section" id="benchSec" style="display:none;">
+          <div class="section-label">Algorithm Comparison</div>
+          <div class="readout-box" id="benchBars"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">HNSW graph layers</div>
+          <div class="layers" id="layers">
+            <div class="readout-empty">Loading layers…</div>
+          </div>
         </div>
       </div>
-      <div>
-        <div class="sec">Query Embedding (16D)</div>
-        <canvas id="vecCvs" height="76"></canvas>
-      </div>
-      <div id="benchSec" style="display:none">
-        <div class="sec">Algorithm Comparison</div>
-        <div class="bench" id="benchBars"></div>
-      </div>
-      <div>
-        <div class="sec">HNSW Graph Layers</div>
-        <div class="layers" id="layers">
-          <div style="color:var(--muted);font-size:11px">Loading…</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- TAB: DOCUMENTS -->
-    <div class="tab-content" id="tab-docs">
-      <div>
-        <div class="sec">Ollama Status</div>
-        <div class="ollama-status" id="ollamaStatus">Checking…</div>
-      </div>
-      <div>
-        <div class="sec">Insert Document</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <input type="text" id="docTitle" placeholder="Document title / topic…" />
-          <textarea id="docText" placeholder="Paste your notes, textbook excerpt, lecture content…&#10;&#10;Long text is automatically split into overlapping chunks and each chunk gets its own real embedding via Ollama's nomic-embed-text model."></textarea>
-          <button class="btn-g" id="insertDocBtn" onclick="insertDocument()">⚡ EMBED &amp; INSERT</button>
-          <div id="insertStatus" style="font-size:11px;color:var(--muted)"></div>
+      <!-- TAB: DOCUMENTS -->
+      <div class="tab-content" id="tab-docs">
+        <div class="section">
+          <div class="section-label">Ollama Status</div>
+          <div class="ollama-status" id="ollamaStatus">Checking status…</div>
         </div>
-      </div>
-      <div>
-        <div class="sec">Stored Documents (<span id="docCountLabel">0</span>)</div>
-        <div class="doc-list" id="docList">
-          <div style="color:var(--muted);font-size:11px">No documents yet. Insert some above.</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- TAB: ASK AI (RAG) -->
-    <div class="tab-content" id="tab-rag">
-      <div>
-        <div class="sec">Ask a Question</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <textarea id="ragQuestion" rows="3" placeholder="What is dynamic programming?&#10;Explain the main idea of HNSW.&#10;How does the recipe differ from…"></textarea>
-          <div style="display:flex;gap:6px">
-            <select id="ragK" style="width:auto;flex-shrink:0">
+        <div class="section">
+          <div class="section-label">Insert Document</div>
+          <input type="text" id="docTitle" placeholder="Document title / topic…" style="margin-bottom:8px;">
+          <textarea id="docText" placeholder="Paste notes, textbook excerpt, etc. Long text will be split into overlapping chunks and embedded via nomic-embed-text." style="margin-bottom:8px;"></textarea>
+          <button class="btn-primary" id="insertDocBtn" onclick="insertDocument()">⚡ Embed &amp; Insert</button>
+          <div id="insertStatus" style="font-size:10px;color:var(--text-muted);margin-top:6px;"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Stored Documents (<span id="docCountLabel">0</span>)</div>
+          <div class="dcard-list" id="docList" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="readout-empty">No documents yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ASK AI (RAG) -->
+      <div class="tab-content" id="tab-rag">
+        <div class="section">
+          <div class="section-label">Ask a Question</div>
+          <textarea id="ragQuestion" placeholder="Ask a question about your documents..." style="margin-bottom:8px;"></textarea>
+          <div style="display:flex;gap:8px;">
+            <select id="ragK" style="width:90px;flex-shrink:0;">
               <option value="2">Top 2</option>
               <option value="3" selected>Top 3</option>
               <option value="5">Top 5</option>
             </select>
-            <button class="btn-g" id="askBtn" onclick="askAI()" style="flex:1">🤖 ASK AI</button>
+            <button class="btn-primary" id="askBtn" onclick="askAI()" style="margin:0;flex:1;">🤖 Ask AI</button>
           </div>
-          <div style="font-size:10px;color:var(--muted)">Uses your inserted documents as context. Answers come from the local LLM.</div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Conversation</div>
+          <div class="chat-history" id="chatHistory">
+            <div class="readout-empty">Ask a question about your inserted documents…</div>
+          </div>
         </div>
       </div>
-      <div>
-        <div class="sec">Conversation</div>
-        <div class="chat-history" id="chatHistory">
-          <div style="color:var(--muted);font-size:11px">Ask a question about your inserted documents…</div>
-        </div>
-      </div>
+
     </div>
 
-  </div><!-- end right-panel -->
-</div><!-- end layout -->
+  </div>
+</div>
 
 <div id="tip"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════
-//  CONSTANTS
-// ════════════════════════════════════════════════════════════
 const API  = 'http://localhost:8080';
 const DIMS = 16;
-const COL  = { cs:'#00d9ff', math:'#b388ff', food:'#ffb74d', sports:'#69f0ae', doc:'#a6e3a1', default:'#90a4ae' };
-const DIM_COL = ['#00d9ff','#00d9ff','#00d9ff','#00d9ff','#b388ff','#b388ff','#b388ff','#b388ff',
-                 '#ffb74d','#ffb74d','#ffb74d','#ffb74d','#69f0ae','#69f0ae','#69f0ae','#69f0ae'];
+const COL  = { cs:'#8FE3C0', math:'#7FBEDD', food:'#E3B37A', sports:'#B3A6E0', doc:'#D99AAE', default:'#5A6B66' };
+const DIM_COL = ['#8FE3C0','#8FE3C0','#8FE3C0','#8FE3C0','#7FBEDD','#7FBEDD','#7FBEDD','#7FBEDD',
+                 '#E3B37A','#E3B37A','#E3B37A','#E3B37A','#B3A6E0','#B3A6E0','#B3A6E0','#B3A6E0'];
 
-// ════════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════════
 let allItems = [], pcaPoints = [], hitIds = new Set(), queryPt = null;
 let hoverItem = null, pulse = 0, selAlgo = 'hnsw', searchResults = [];
 
-// ════════════════════════════════════════════════════════════
-//  TABS
-// ════════════════════════════════════════════════════════════
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['search','docs','rag'];
-    t.classList.toggle('on', names[i] === name);
-  });
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('on'));
-  document.getElementById('tab-' + name).classList.add('on');
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tabBtn-' + name).classList.add('active');
+
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+
   if (name === 'docs') loadDocList();
 }
 
-// ════════════════════════════════════════════════════════════
-//  TEXT → 16-D EMBEDDING (for demo vectors)
-// ════════════════════════════════════════════════════════════
 const KW = {
   cs:     ['algorithm','data','tree','graph','array','linked','hash','stack','queue','sort','binary','dynamic','programming','recursion','complexity','pointer','node','search','insert','bfs','dfs','heap','trie'],
   math:   ['calculus','matrix','probability','theorem','integral','derivative','linear','algebra','equation','function','prime','modular','combinatorics','permutation','eigenvalue','statistics','proof'],
@@ -384,9 +469,6 @@ function textToEmbedding(text) {
   return emb;
 }
 
-// ════════════════════════════════════════════════════════════
-//  PCA
-// ════════════════════════════════════════════════════════════
 function pca2D(embs) {
   const n = embs.length, d = embs[0].length;
   if (n < 2) return embs.map(() => [0,0]);
@@ -414,83 +496,85 @@ function pca2D(embs) {
   return X.map(x=>[x.reduce((s,v,i)=>s+v*pc1[i],0),x.reduce((s,v,i)=>s+v*pc2[i],0)]);
 }
 
-// ════════════════════════════════════════════════════════════
-//  SCATTER PLOT
-// ════════════════════════════════════════════════════════════
 const sc=document.getElementById('scatter'), ctx=sc.getContext('2d');
 let bounds={minX:-1,maxX:1,minY:-1,maxY:1};
 
-function resize() { const r=sc.parentElement.getBoundingClientRect(); sc.width=r.width; sc.height=r.height; }
+function resize() {
+  const r=sc.parentElement.getBoundingClientRect();
+  sc.width=r.width;
+  sc.height=r.height - 110; // offset canvas headers and footers
+}
 window.addEventListener('resize', resize);
 
 function w2c(wx,wy) {
-  const P=70,W=sc.width,H=sc.height,rx=bounds.maxX-bounds.minX||1,ry=bounds.maxY-bounds.minY||1;
+  const P=60,W=sc.width,H=sc.height,rx=bounds.maxX-bounds.minX||1,ry=bounds.maxY-bounds.minY||1;
   return [P+((wx-bounds.minX)/rx)*(W-2*P), H-P-((wy-bounds.minY)/ry)*(H-2*P)];
 }
 
 function drawFrame() {
   ctx.clearRect(0,0,sc.width,sc.height);
-  ctx.fillStyle='#07070f'; ctx.fillRect(0,0,sc.width,sc.height);
-  ctx.strokeStyle='#0e0e1e'; ctx.lineWidth=1;
-  for (let i=0;i<=8;i++) {
-    const tx=70+(i/8)*(sc.width-140),ty=70+(i/8)*(sc.height-140);
-    ctx.beginPath();ctx.moveTo(tx,70);ctx.lineTo(tx,sc.height-70);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(70,ty);ctx.lineTo(sc.width-70,ty);ctx.stroke();
+  ctx.fillStyle='#0B0F0E'; ctx.fillRect(0,0,sc.width,sc.height);
+
+  // draw dotted background grid
+  ctx.fillStyle='#182220';
+  for(let x=14; x<sc.width; x+=28){
+    for(let y=14; y<sc.height; y+=28){
+      ctx.beginPath();ctx.arc(x,y,1,0,2*Math.PI);ctx.fill();
+    }
   }
-  ctx.fillStyle='#1a1a38'; ctx.font='11px Fira Code,monospace';
-  ctx.fillText('PC₁ →',sc.width/2-40,sc.height-18);
-  ctx.save();ctx.translate(18,sc.height/2+50);ctx.rotate(-Math.PI/2);ctx.fillText('PC₂ →',0,0);ctx.restore();
-  ctx.fillStyle='#151530'; ctx.font='12px Fira Code,monospace';
-  ctx.fillText('2D PCA Projection  ·  Semantic Space',80,28);
 
   if (queryPt && hitIds.size>0) {
     const [qx,qy]=w2c(queryPt.x,queryPt.y);
     for (const pt of pcaPoints) {
       if (!hitIds.has(pt.item.id)) continue;
       const [px,py]=w2c(pt.x,pt.y);
-      ctx.strokeStyle='rgba(108,99,255,0.18)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+      ctx.strokeStyle='rgba(143,227,192,0.18)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
       ctx.beginPath();ctx.moveTo(qx,qy);ctx.lineTo(px,py);ctx.stroke();
       ctx.setLineDash([]);
     }
   }
+
   for (const pt of pcaPoints) {
     const [cx,cy]=w2c(pt.x,pt.y);
     const col=COL[pt.item.category]||COL.default;
-    const isHit=hitIds.has(pt.item.id), r=isHit?10:7;
+    const isHit=hitIds.has(pt.item.id), r=isHit?8:5;
     if (isHit) {
-      const pr=r+7+Math.sin(pulse)*3.5;
+      const pr=r+6+Math.sin(pulse)*2.5;
       ctx.beginPath();ctx.arc(cx,cy,pr,0,2*Math.PI);
-      ctx.strokeStyle=col+'55';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle=col+'44';ctx.lineWidth=1;ctx.stroke();
     }
     const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,r*3);
-    grd.addColorStop(0,col+(isHit?'bb':'88'));grd.addColorStop(1,'transparent');
+    grd.addColorStop(0,col+(isHit?'77':'33'));grd.addColorStop(1,'transparent');
     ctx.beginPath();ctx.arc(cx,cy,r*3,0,2*Math.PI);ctx.fillStyle=grd;ctx.fill();
     ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.fillStyle=col;ctx.fill();
     if (hoverItem&&hoverItem.id===pt.item.id) {
-      ctx.beginPath();ctx.arc(cx,cy,r+5,0,2*Math.PI);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,r+4,0,2*Math.PI);ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
     }
   }
+
   if (queryPt) {
     const [qx,qy]=w2c(queryPt.x,queryPt.y);
-    ctx.save();ctx.translate(qx,qy);
-    ctx.shadowColor='#fff';ctx.shadowBlur=18;
     ctx.beginPath();
-    for (let i=0;i<10;i++){const a=(i*Math.PI/5)-Math.PI/2,rr=i%2===0?13:5;if(i===0)ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);else ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}
-    ctx.closePath();ctx.fillStyle='#fff';ctx.fill();
-    ctx.shadowBlur=0;ctx.restore();
-    ctx.fillStyle='#aaaacc';ctx.font='10px Fira Code,monospace';ctx.fillText('query',qx+16,qy+4);
+    ctx.arc(qx,qy,6,0,2*Math.PI);
+    ctx.fillStyle='#E4E9E6';
+    ctx.fill();
+    ctx.strokeStyle='#0B0F0E';
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    ctx.fillStyle='#8A9B95';ctx.font='10px IBM Plex Mono,monospace';ctx.fillText('query',qx+12,qy+4);
   }
   if (!pcaPoints.length) {
-    ctx.fillStyle='#1a1a38';ctx.font='13px Fira Code,monospace';ctx.textAlign='center';
-    ctx.fillText('Connecting to Custom VectorDB…',sc.width/2,sc.height/2);ctx.textAlign='left';
+    ctx.fillStyle='#5A6B66';ctx.font='12px IBM Plex Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('Connecting to VectorDB…',sc.width/2,sc.height/2);ctx.textAlign='left';
   }
-  pulse+=0.05;
+  pulse+=0.04;
   requestAnimationFrame(drawFrame);
 }
 
 sc.addEventListener('mousemove', e => {
   const rect=sc.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  hoverItem=null; let best=18;
+  hoverItem=null; let best=16;
   for (const pt of pcaPoints) {
     const [cx,cy]=w2c(pt.x,pt.y),d=Math.hypot(mx-cx,my-cy);
     if (d<best){best=d;hoverItem=pt.item;}
@@ -499,14 +583,11 @@ sc.addEventListener('mousemove', e => {
   if (hoverItem) {
     const col=COL[hoverItem.category]||COL.default;
     tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-8)+'px';
-    tip.innerHTML=`<span style="color:${col}">[${hoverItem.category}]</span><br>${hoverItem.metadata}`;
+    tip.innerHTML=`<span style="color:${col}">[${hoverItem.category}]</span> ${hoverItem.metadata}`;
   } else tip.style.display='none';
 });
 sc.addEventListener('mouseleave',()=>{hoverItem=null;document.getElementById('tip').style.display='none';});
 
-// ════════════════════════════════════════════════════════════
-//  LOAD DEMO ITEMS
-// ════════════════════════════════════════════════════════════
 async function loadItems() {
   try {
     const r = await fetch(API+'/items');
@@ -519,16 +600,13 @@ async function loadItems() {
       const px=(x1-x0)*.18||.1,py=(y1-y0)*.18||.1;
       bounds={minX:x0-px,maxX:x1+px,minY:y0-py,maxY:y1+py};
     }
-    document.getElementById('statsLabel').textContent=allItems.length+' vectors · '+DIMS+' dims';
+    document.getElementById('statsLabel').textContent=allItems.length+' VECTORS · '+DIMS+' DIMS';
   } catch(_) {}
 }
 
-// ════════════════════════════════════════════════════════════
-//  DEMO SEARCH
-// ════════════════════════════════════════════════════════════
 function setAlgo(el) {
-  document.querySelectorAll('.algo-btn').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on'); selAlgo=el.dataset.algo;
+  document.querySelectorAll('.algo-toggle button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); selAlgo=el.dataset.algo;
 }
 
 async function runSearch() {
@@ -541,7 +619,7 @@ async function runSearch() {
     searchResults=data.results||[]; hitIds=new Set(searchResults.map(r=>r.id));
     const us=data.latencyUs||0;
     document.getElementById('latBig').textContent=us<1000?us+' μs':(us/1000).toFixed(2)+' ms';
-    document.getElementById('latSub').textContent=selAlgo.toUpperCase()+'  ·  '+metric+'  ·  k='+k;
+    document.getElementById('latSub').textContent=selAlgo.toUpperCase()+' · '+metric.toUpperCase()+' · k='+k;
     if (searchResults.length>0){
       let sx=0,sy=0,sw=0;
       for (let i=0;i<Math.min(3,searchResults.length);i++){
@@ -557,14 +635,14 @@ async function runSearch() {
 document.getElementById('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')runSearch();});
 
 function renderResults(results) {
-  if (!results||!results.length){document.getElementById('results').innerHTML='<div style="color:var(--muted);font-size:11px">No results</div>';return;}
+  if (!results||!results.length){document.getElementById('results').innerHTML='<div class="readout-empty">No results</div>';return;}
   document.getElementById('results').innerHTML=results.map((r,i)=>{
     const col=COL[r.category]||COL.default;
     return `<div class="rcard" onmouseenter="hoverItem={id:${r.id}}" onmouseleave="hoverItem=null">
       <div class="rrank">#${i+1} NEAREST</div>
       <div class="rmeta">${r.metadata}</div>
       <div class="rfoot">
-        <span class="rcat" style="background:${col}18;color:${col};border:1px solid ${col}44">${r.category.toUpperCase()}</span>
+        <span class="rcat" style="border-color:${col}44;color:${col}">${r.category.toUpperCase()}</span>
         <span class="rdist">dist: ${r.distance.toFixed(5)}</span>
         <button class="del" onclick="deleteItem(${r.id})">✕</button>
       </div>
@@ -575,17 +653,12 @@ function renderResults(results) {
 function drawVecChart(emb) {
   const vc=document.getElementById('vecCvs'),W=vc.parentElement.clientWidth;
   vc.width=W;const vx=vc.getContext('2d');
-  vx.clearRect(0,0,W,76);vx.fillStyle='#07070f';vx.fillRect(0,0,W,76);
+  vx.clearRect(0,0,W,64);
   const bw=(W-4)/DIMS;
   for (let i=0;i<DIMS;i++){
-    const h=emb[i]*58,x=2+i*bw,col=DIM_COL[i];
-    vx.shadowColor=col;vx.shadowBlur=5;vx.fillStyle=col+'aa';vx.fillRect(x+1,63-h,bw-2,h);
+    const h=emb[i]*48,x=2+i*bw,col=DIM_COL[i];
+    vx.fillStyle=col+'88';vx.fillRect(x+1,54-h,bw-2,h);
   }
-  vx.shadowBlur=0;vx.font='8px monospace';vx.textAlign='center';
-  [['CS',0],['MATH',4],['FOOD',8],['SPORT',12]].forEach(([lbl,gi],i)=>{
-    vx.fillStyle=Object.values(COL)[i]+'77';vx.fillText(lbl,2+(gi+1.5)*bw,74);
-  });
-  vx.textAlign='left';
 }
 
 async function runBenchmark() {
@@ -597,12 +670,12 @@ async function runBenchmark() {
     document.getElementById('benchSec').style.display='block';
     const mx=Math.max(d.bruteforceUs,d.kdtreeUs,d.hnswUs,1);
     document.getElementById('benchBars').innerHTML=[
-      {lbl:'Brute Force',us:d.bruteforceUs,col:'#f38ba8'},
-      {lbl:'KD-Tree',    us:d.kdtreeUs,    col:'#89dceb'},
-      {lbl:'HNSW',       us:d.hnswUs,      col:'#b388ff'},
+      {lbl:'Brute Force',us:d.bruteforceUs,col:'#D99AAE'},
+      {lbl:'KD-Tree',    us:d.kdtreeUs,    col:'#7FBEDD'},
+      {lbl:'HNSW',       us:d.hnswUs,      col:'#B3A6E0'},
     ].map(({lbl,us,col})=>{
       const pct=Math.max((us/mx)*100,2),disp=us<1000?us+' μs':(us/1000).toFixed(2)+' ms';
-      return `<div class="brow"><div class="blabel"><span style="color:${col}">${lbl}</span><span style="color:var(--muted)">${disp}</span></div><div class="btrack"><div class="bfill" style="width:${pct}%;background:${col}"></div></div></div>`;
+      return `<div class="bench-bar"><div class="bench-label"><span style="color:${col}">${lbl}</span><span>${disp}</span></div><div class="bench-track"><div class="bench-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
     }).join('');
   } catch(_) {}
 }
@@ -613,8 +686,8 @@ async function loadHNSW() {
     const maxN=d.nodesPerLayer[0]||1;
     document.getElementById('layers').innerHTML=d.nodesPerLayer.map((cnt,lyr)=>{
       const pct=Math.max((cnt/maxN)*100,2),edg=d.edgesPerLayer[lyr]||0;
-      return `<div class="lrow"><div class="lnum">L${lyr}</div><div class="ltrack"><div class="lfill" style="width:${pct}%"></div></div><div class="lcount">${cnt}n · ${edg}e</div></div>`;
-    }).join('')||'<div style="color:var(--muted);font-size:11px">Empty</div>';
+      return `<div class="layer-row"><span class="l">L${lyr}</span><div class="layer-bar"><div class="fill" style="width:${pct}%"></div></div><span class="n">${cnt}n · ${edg}e</span></div>`;
+    }).join('')||'<div class="readout-empty">Empty</div>';
   } catch(_) {}
 }
 
@@ -637,28 +710,25 @@ async function deleteItem(id) {
   } catch(_) {}
 }
 
-// ════════════════════════════════════════════════════════════
-//  DOCUMENT MANAGEMENT
-// ════════════════════════════════════════════════════════════
 async function checkOllamaStatus() {
   try {
     const r=await fetch(API+'/status'), d=await r.json();
     const badge=document.getElementById('ollamaBadge');
     const box=document.getElementById('ollamaStatus');
     if (d.ollamaAvailable) {
-      badge.className='badge ok'; badge.textContent='OLLAMA ✓';
+      badge.className='badge ok'; badge.innerHTML='<span class="dot"></span>OLLAMA';
       box.className='ollama-status ok';
-      box.innerHTML=`<span style="color:var(--green)">● Online</span><br>`+
-        `Embed: <span style="color:var(--accent)">${d.embedModel}</span><br>`+
-        `Generate: <span style="color:var(--accent)">${d.genModel}</span><br>`+
-        `Dims: <span style="color:var(--muted)">${d.docDims||'(first insert sets this)'}</span><br>`+
+      box.innerHTML=`<span style="color:var(--mint)">● Online</span><br>`+
+        `Embed: <span style="color:var(--text)">${d.embedModel}</span><br>`+
+        `Generate: <span style="color:var(--text)">${d.genModel}</span><br>`+
+        `Dims: <span style="color:var(--text-dim)">${d.docDims||'(first insert sets this)'}</span><br>`+
         `Documents: <span style="color:var(--text)">${d.docCount}</span>`;
     } else {
-      badge.className='badge err'; badge.textContent='OLLAMA ✗';
+      badge.className='badge offline'; badge.innerHTML='<span class="dot"></span>OLLAMA';
       box.className='ollama-status err';
-      box.innerHTML=`<span style="color:var(--red)">● Offline</span><br><br>`+
+      box.innerHTML=`<span style="color:#d97c7c">● Offline</span><br><br>`+
         `To enable RAG features:<br>`+
-        `<span style="color:var(--muted)">1. Install from ollama.com<br>`+
+        `<span style="color:var(--text-muted)">1. Install from ollama.com<br>`+
         `2. ollama pull nomic-embed-text<br>`+
         `3. ollama pull llama3.2</span>`;
     }
@@ -673,7 +743,7 @@ async function insertDocument() {
   if(!title||!text){status.textContent='⚠ Need both a title and text.';return;}
 
   btn.disabled=true; btn.textContent='Embedding…';
-  status.innerHTML='<span style="color:var(--muted)">Calling Ollama nomic-embed-text…</span>';
+  status.innerHTML='<span style="color:var(--text-muted)">Calling Ollama nomic-embed-text…</span>';
 
   try {
     const r=await fetch(API+'/doc/insert',{
@@ -682,25 +752,24 @@ async function insertDocument() {
     });
     const d=await r.json();
     if (d.error) {
-      status.innerHTML=`<span style="color:var(--red)">✗ ${d.error}</span>`;
+      status.innerHTML=`<span style="color:#e38888">✗ ${d.error}</span>`;
     } else {
-      status.innerHTML=`<span style="color:var(--green)">✓ Inserted ${d.chunks} chunk(s) · ${d.dims}D embeddings</span>`;
+      status.innerHTML=`<span style="color:var(--mint)">✓ Inserted ${d.chunks} chunk(s) · ${d.dims}D embeddings</span>`;
       document.getElementById('docTitle').value='';
       document.getElementById('docText').value='';
 
-          // Insert a 16D fake vector into the visualizer DB so it shows up on the map
-          const emb16 = textToEmbedding(title + ' ' + text);
-          fetch(API+'/insert', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({metadata: title, category: 'doc', embedding: emb16})
-          }).then(() => { loadItems().then(loadHNSW); });
+      const emb16 = textToEmbedding(title + ' ' + text);
+      fetch(API+'/insert', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({metadata: title, category: 'doc', embedding: emb16})
+      }).then(() => { loadItems().then(loadHNSW); });
 
       loadDocList(); checkOllamaStatus();
     }
   } catch(_) {
-    status.innerHTML='<span style="color:var(--red)">✗ Server error</span>';
+    status.innerHTML='<span style="color:#e38888">✗ Server error</span>';
   }
-  btn.disabled=false; btn.textContent='⚡ EMBED & INSERT';
+  btn.disabled=false; btn.textContent='⚡ Embed & Insert';
 }
 
 async function loadDocList() {
@@ -708,7 +777,7 @@ async function loadDocList() {
     const r=await fetch(API+'/doc/list'), docs=await r.json();
     document.getElementById('docCountLabel').textContent=docs.length;
     if (!docs.length) {
-      document.getElementById('docList').innerHTML='<div style="color:var(--muted);font-size:11px">No documents yet.</div>';
+      document.getElementById('docList').innerHTML='<div class="readout-empty">No documents yet.</div>';
       return;
     }
     document.getElementById('docList').innerHTML=docs.map(d=>`
@@ -730,13 +799,6 @@ async function deleteDoc(id) {
   } catch(_) {}
 }
 
-// ════════════════════════════════════════════════════════════
-//  RAG  — Ask AI
-// ════════════════════════════════════════════════════════════
-document.getElementById('ragQuestion').addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&e.ctrlKey)askAI();
-});
-
 async function askAI() {
   const question=document.getElementById('ragQuestion').value.trim();
   if(!question)return;
@@ -745,20 +807,16 @@ async function askAI() {
   btn.disabled=true; btn.textContent='Thinking…';
 
   const history=document.getElementById('chatHistory');
-  // Clear previous conversation
   history.innerHTML='';
 
-  // Show question bubble
   const qDiv=document.createElement('div'); qDiv.className='chat-q';
   qDiv.textContent=question; history.appendChild(qDiv);
 
-  // Show thinking indicator
   const thinkDiv=document.createElement('div'); thinkDiv.className='thinking';
   thinkDiv.innerHTML='<div class="spinner"></div>Retrieving context & generating answer…';
   history.appendChild(thinkDiv);
   history.scrollTop=history.scrollHeight;
 
-  // Update the scatter plot visualizer in the background using the real 768D DB
   fetch(API+'/doc/search', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({question, k})
@@ -769,7 +827,6 @@ async function askAI() {
       hitIds = new Set();
       let sx=0, sy=0, sw=0;
       data.contexts.forEach((ctx, i) => {
-        // Match the RAG chunk title back to the visualizer document metadata
         const pt = pcaPoints.find(p => p.item.category === 'doc' && ctx.title.startsWith(p.item.metadata));
         if (pt) {
           hitIds.add(pt.item.id);
@@ -779,7 +836,6 @@ async function askAI() {
       if (sw > 0) queryPt = {x: sx/sw + (Math.random()-.5)*.015, y: sy/sw + (Math.random()-.5)*.015};
     } else {
       hitIds = new Set();
-      // Fallback: If no RAG docs match, visually move the star to the 16D semantic space anyway!
       const emb16 = textToEmbedding(question);
       fetch(`${API}/search?v=${emb16.join(',')}&k=3&metric=cosine&algo=hnsw`)
         .then(res2=>res2.json())
@@ -807,9 +863,8 @@ async function askAI() {
     const aDiv=document.createElement('div'); aDiv.className='chat-a';
 
     if (d.error) {
-      aDiv.innerHTML=`<div class="chat-a-label">ERROR</div><div class="chat-a-text" style="color:var(--red)">${d.error}</div>`;
+      aDiv.innerHTML=`<div class="chat-a-label">ERROR</div><div class="chat-a-text" style="color:#e38888">${d.error}</div>`;
     } else {
-      // Build answer block with typewriter
       aDiv.innerHTML=`<div class="chat-a-label">🤖 ${d.model||'llm'}</div>`+
         `<div class="chat-a-text" id="typeTarget"></div>`+
         `<div class="chat-ctx">`+
@@ -819,7 +874,6 @@ async function askAI() {
         `</div>`;
       history.appendChild(aDiv);
 
-      // Typewriter effect
       const target=aDiv.querySelector('#typeTarget');
       target.classList.add('typing');
       const full=d.answer; let i=0;
@@ -829,19 +883,15 @@ async function askAI() {
         history.scrollTop=history.scrollHeight;
       },18);
     }
-
-    if (!d.error) { /* already appended above */ }
-    else history.appendChild(aDiv);
-
   } catch(e) {
     thinkDiv.remove();
     const err=document.createElement('div');err.className='chat-a';
-    err.innerHTML='<div class="chat-a-label">ERROR</div><div class="chat-a-text" style="color:var(--red)">Server error — is the backend running?</div>';
+    err.innerHTML='<div class="chat-a-label">ERROR</div><div class="chat-a-text" style="color:#e38888">Server error — is the backend running?</div>';
     history.appendChild(err);
   }
 
   document.getElementById('ragQuestion').value='';
-  btn.disabled=false; btn.textContent='🤖 ASK AI';
+  btn.disabled=false; btn.textContent='🤖 Ask AI';
   history.scrollTop=history.scrollHeight;
 }
 
@@ -850,9 +900,6 @@ function toggleCtx(i) {
   el.style.display=el.style.display==='block'?'none':'block';
 }
 
-// ════════════════════════════════════════════════════════════
-//  BOOT
-// ════════════════════════════════════════════════════════════
 resize(); drawFrame();
 loadItems().then(loadHNSW);
 checkOllamaStatus();
