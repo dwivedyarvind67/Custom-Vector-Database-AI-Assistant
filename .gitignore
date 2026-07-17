@@ -1,18 +1,29 @@
-# Compiled binaries
-*.exe
-*.o
-*.out
-a.out
-
-# Build directories
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
 build/
-bin/
+*.egg
 
-# IDE files
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
 .vscode/
 .idea/
-*.user
+*.swp
+*.swo
+*~
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
+
+# Environment
+.env
+.env.local
